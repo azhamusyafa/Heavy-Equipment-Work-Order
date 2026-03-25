@@ -1,0 +1,208 @@
+---
+import MainLayout from '../../layouts/MainLayout.astro'
+---
+
+<MainLayout title="Work Order Detail">
+  <div class="max-w-3xl">
+    <div class="flex items-center gap-3 mb-6">
+      <a href="/work-orders" class="text-white/30 hover:text-white text-sm transition-colors">Work Orders</a>
+      <span class="text-white/20">/</span>
+      <span class="text-white/60 text-sm font-mono" id="detail-wo-number">Loading...</span>
+    </div>
+
+    <div id="detail-skeleton" class="space-y-4">
+      <div class="skeleton h-40 w-full"></div>
+      <div class="skeleton h-60 w-full"></div>
+    </div>
+
+    <div id="detail-content" class="hidden space-y-4 animate-fade-in-up">
+
+      <div class="card">
+        <div class="flex items-start justify-between mb-6">
+          <div>
+            <p class="font-mono text-accent text-xl font-700" id="detail-number"></p>
+            <p class="text-white/30 text-xs mt-1" id="detail-created"></p>
+          </div>
+          <div id="detail-status"></div>
+        </div>
+
+        <div class="grid grid-cols-3 gap-6">
+          <div>
+            <p class="input-label">Maintenance Type</p>
+            <p class="text-white/80 text-sm" id="detail-mt"></p>
+          </div>
+          <div>
+            <p class="input-label">Equipment Category</p>
+            <p class="text-white/80 text-sm" id="detail-ec"></p>
+          </div>
+          <div>
+            <p class="input-label">Workshop Location</p>
+            <p class="text-white/80 text-sm" id="detail-wl"></p>
+          </div>
+          <div>
+            <p class="input-label">Serial Number</p>
+            <p class="text-white/80 text-sm font-mono" id="detail-serial"></p>
+          </div>
+          <div>
+            <p class="input-label">Hour Meter</p>
+            <p class="text-white/80 text-sm" id="detail-hourmeter"></p>
+          </div>
+          <div>
+            <p class="input-label">Machine Down</p>
+            <p class="text-sm" id="detail-machinedown"></p>
+          </div>
+          <div>
+            <p class="input-label">Reporter</p>
+            <p class="text-white/80 text-sm" id="detail-reporter"></p>
+          </div>
+          <div>
+            <p class="input-label">Reported At</p>
+            <p class="text-white/80 text-sm" id="detail-reported"></p>
+          </div>
+          <div>
+            <p class="input-label">Damage Photo</p>
+            <a id="detail-photo" href="#" target="_blank" class="text-accent text-sm hover:underline">View Photo</a>
+          </div>
+        </div>
+
+        <div class="mt-6 pt-6 border-t border-white/5">
+          <p class="input-label mb-2">Breakdown Symptom</p>
+          <p class="text-white/70 text-sm leading-relaxed" id="detail-symptom"></p>
+        </div>
+      </div>
+
+      <div class="card" id="detail-progress-card">
+        <h3 class="font-display font-700 text-base text-white mb-5">Progress</h3>
+
+        <div class="space-y-5">
+          <div id="section-inspected" class="hidden">
+            <div class="flex items-center gap-2 mb-3">
+              <div class="w-2 h-2 rounded-full bg-warning"></div>
+              <p class="text-warning text-xs font-mono uppercase tracking-wider">Inspected</p>
+              <span class="text-white/20 text-xs ml-auto font-mono" id="detail-inspected-at"></span>
+            </div>
+            <div class="pl-4 border-l border-white/5 space-y-2">
+              <p class="input-label">Inspection Notes</p>
+              <p class="text-white/70 text-sm" id="detail-inspection-notes"></p>
+              <p class="input-label mt-3">Estimated Cost</p>
+              <p class="text-white/80 text-sm font-mono" id="detail-estimated-cost"></p>
+            </div>
+          </div>
+
+          <div id="section-mechanic" class="hidden">
+            <div class="flex items-center gap-2 mb-3">
+              <div class="w-2 h-2 rounded-full bg-info"></div>
+              <p class="text-info text-xs font-mono uppercase tracking-wider">In Progress</p>
+            </div>
+            <div class="pl-4 border-l border-white/5">
+              <p class="input-label">Lead Mechanic</p>
+              <p class="text-white/80 text-sm" id="detail-mechanic"></p>
+            </div>
+          </div>
+
+          <div id="section-completed" class="hidden">
+            <div class="flex items-center gap-2 mb-3">
+              <div class="w-2 h-2 rounded-full bg-accent"></div>
+              <p class="text-accent text-xs font-mono uppercase tracking-wider">Completed</p>
+              <span class="text-white/20 text-xs ml-auto font-mono" id="detail-completed-at"></span>
+            </div>
+            <div class="pl-4 border-l border-white/5 space-y-2">
+              <p class="input-label">Actual Cost</p>
+              <p class="text-white/80 text-sm font-mono" id="detail-actual-cost"></p>
+              <p class="input-label mt-3">Replaced Parts</p>
+              <p class="text-white/70 text-sm" id="detail-parts-log"></p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <div id="detail-error" class="hidden card text-center py-12">
+      <p class="text-danger text-sm">Failed to load work order.</p>
+      <a href="/work-orders" class="btn-ghost mt-4 inline-flex">Back to list</a>
+    </div>
+  </div>
+</MainLayout>
+
+<script>
+  import api from '../../lib/axios'
+  import type { ApiResponse, WorkOrder } from '../../types'
+
+  const id = window.location.pathname.split('/').pop()
+
+  const statusBadge = (status: WorkOrder['status']) => {
+    const map: Record<string, string> = {
+      OPEN: 'badge-open',
+      INSPECTED: 'badge-inspected',
+      IN_PROGRESS: 'badge-in-progress',
+      COMPLETED: 'badge-completed',
+    }
+    const label: Record<string, string> = {
+      OPEN: 'Open',
+      INSPECTED: 'Inspected',
+      IN_PROGRESS: 'In Progress',
+      COMPLETED: 'Completed',
+    }
+    return `<span class="badge ${map[status]}">${label[status]}</span>`
+  }
+
+  const fmt = (n: number | null) => n != null
+    ? `Rp ${n.toLocaleString('id-ID')}`
+    : '—'
+
+  const fmtDate = (d: string | null) => d
+    ? new Date(d).toLocaleString('id-ID')
+    : '—'
+
+  async function load() {
+    try {
+      const res = await api.get<ApiResponse<WorkOrder>>(`/work-orders/${id}`)
+      const wo = res.data.data
+
+      document.getElementById('detail-wo-number')!.textContent = wo.wo_number
+      document.getElementById('detail-number')!.textContent = wo.wo_number
+      document.getElementById('detail-created')!.textContent = `Created ${fmtDate(wo.created_at)}`
+      document.getElementById('detail-status')!.innerHTML = statusBadge(wo.status)
+      document.getElementById('detail-mt')!.textContent = `${wo.maintenance_type?.code} — ${wo.maintenance_type?.name}`
+      document.getElementById('detail-ec')!.textContent = wo.equipment_category?.category_name ?? '—'
+      document.getElementById('detail-wl')!.textContent = `${wo.workshop_location?.site_code} — ${wo.workshop_location?.location_name}`
+      document.getElementById('detail-serial')!.textContent = wo.equipment_serial_number
+      document.getElementById('detail-hourmeter')!.textContent = `${wo.current_hour_meter.toLocaleString('id-ID')} hrs`
+      document.getElementById('detail-machinedown')!.innerHTML = wo.is_machine_down
+        ? '<span class="text-danger">Yes</span>'
+        : '<span class="text-white/40">No</span>'
+      document.getElementById('detail-reporter')!.textContent = wo.reporter_name
+      document.getElementById('detail-reported')!.textContent = fmtDate(wo.reported_at)
+      ;(document.getElementById('detail-photo') as HTMLAnchorElement).href = wo.damage_photo_path
+      document.getElementById('detail-symptom')!.textContent = wo.breakdown_symptom
+
+      if (['INSPECTED', 'IN_PROGRESS', 'COMPLETED'].includes(wo.status)) {
+        document.getElementById('section-inspected')!.classList.remove('hidden')
+        document.getElementById('detail-inspected-at')!.textContent = fmtDate(wo.inspected_at)
+        document.getElementById('detail-inspection-notes')!.textContent = wo.inspection_notes ?? '—'
+        document.getElementById('detail-estimated-cost')!.textContent = fmt(wo.estimated_repair_cost)
+      }
+
+      if (['IN_PROGRESS', 'COMPLETED'].includes(wo.status)) {
+        document.getElementById('section-mechanic')!.classList.remove('hidden')
+        document.getElementById('detail-mechanic')!.textContent = wo.lead_mechanic_name ?? '—'
+      }
+
+      if (wo.status === 'COMPLETED') {
+        document.getElementById('section-completed')!.classList.remove('hidden')
+        document.getElementById('detail-completed-at')!.textContent = fmtDate(wo.completed_at)
+        document.getElementById('detail-actual-cost')!.textContent = fmt(wo.actual_repair_cost)
+        document.getElementById('detail-parts-log')!.textContent = wo.replaced_parts_log ?? '—'
+      }
+
+      document.getElementById('detail-skeleton')!.classList.add('hidden')
+      document.getElementById('detail-content')!.classList.remove('hidden')
+    } catch {
+      document.getElementById('detail-skeleton')!.classList.add('hidden')
+      document.getElementById('detail-error')!.classList.remove('hidden')
+    }
+  }
+
+  load()
+</script>

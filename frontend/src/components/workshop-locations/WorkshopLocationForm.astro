@@ -1,0 +1,44 @@
+---
+---
+<div id="modal-location" class="modal-backdrop hidden" role="dialog">
+  <div class="modal-box w-full max-w-lg">
+    <div class="flex items-center justify-between mb-6">
+      <h2 class="font-display font-700 text-lg text-white" id="modal-location-title">Add Location</h2>
+      <button
+        class="w-8 h-8 rounded-lg bg-white/5 border border-white/10 text-white/40 hover:text-white transition-all text-lg"
+        id="btn-close-location-modal"
+      >&times;</button>
+    </div>
+
+    <form id="form-location" class="space-y-5">
+      <input type="hidden" id="location-id" />
+      <input type="hidden" id="location-method" value="POST" />
+
+      <div>
+        <label class="input-label">Site Code <span class="text-accent">*</span></label>
+        <input type="text" id="input-location-code" class="input-field font-mono uppercase" placeholder="e.g. JKT-01" maxlength="20" />
+        <p class="input-error hidden" id="err-site_code"></p>
+      </div>
+
+      <div>
+        <label class="input-label">Location Name <span class="text-accent">*</span></label>
+        <input type="text" id="input-location-name" class="input-field" placeholder="e.g. Bengkel Utama Jakarta" maxlength="150" />
+        <p class="input-error hidden" id="err-location_name"></p>
+      </div>
+
+      <div>
+        <label class="input-label">Address <span class="text-accent">*</span></label>
+        <textarea id="input-location-address" class="input-field min-h-24 resize-none" placeholder="Full address..."></textarea>
+        <p class="input-error hidden" id="err-address"></p>
+      </div>
+
+      <div class="flex gap-3 pt-2">
+        <button type="submit" class="btn-primary flex-1" id="btn-submit-location">
+          <span id="btn-submit-location-text">Save Location</span>
+          <span id="btn-submit-location-loader" class="hidden w-4 h-4 border-2 border-accent/30 border-t-accent rounded-full animate-spin"></span>
+        </button>
+        <button type="button" class="btn-ghost" id="btn-cancel-location">Cancel</button>
+      </div>
+    </form>
+  </div>
+</div>

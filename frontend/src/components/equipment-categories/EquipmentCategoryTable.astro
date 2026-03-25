@@ -1,0 +1,32 @@
+---
+---
+<div class="card animate-fade-in-up">
+  <div class="flex items-center justify-between mb-6">
+    <div>
+      <h2 class="font-display font-700 text-lg text-white">Equipment Categories</h2>
+      <p class="text-white/30 text-xs mt-1">Kelola kategori alat berat</p>
+    </div>
+    <button class="btn-primary" id="btn-add-category">+ Add Category</button>
+  </div>
+
+  <div id="category-list-skeleton" class="space-y-3">
+    {Array.from({length: 4}).map(() => (
+      <div class="skeleton h-14 w-full"></div>
+    ))}
+  </div>
+
+  <table class="w-full hidden" id="category-table">
+    <thead>
+      <tr class="border-b border-white/5">
+        <th class="text-left text-xs font-mono text-white/30 uppercase tracking-wider pb-3 pr-4">Category</th>
+        <th class="text-left text-xs font-mono text-white/30 uppercase tracking-wider pb-3 pr-4">Manual Book</th>
+        <th class="text-left text-xs font-mono text-white/30 uppercase tracking-wider pb-3 pr-4">Status</th>
+        <th class="text-right text-xs font-mono text-white/30 uppercase tracking-wider pb-3">Actions</th>
+      </tr>
+    </thead>
+    <tbody id="category-tbody"></tbody>
+  </table>
+
+  <p id="category-empty" class="hidden text-center text-white/30 text-sm py-12">No categories found.</p>
+  <p id="category-error" class="hidden text-center text-danger text-sm py-12"></p>
+</div>

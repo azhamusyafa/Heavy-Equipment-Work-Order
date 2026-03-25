@@ -1,0 +1,39 @@
+---
+---
+<div class="card animate-fade-in-up">
+  <div class="flex items-center justify-between mb-6">
+    <div>
+      <h2 class="font-display font-700 text-lg text-white">Work Orders</h2>
+      <p class="text-white/30 text-xs mt-1">Daftar semua work order</p>
+    </div>
+    <a href="/work-orders/create" class="btn-primary">+ Create WO</a>
+  </div>
+
+  <div id="wo-list-skeleton" class="space-y-3">
+    {Array.from({length: 5}).map(() => (
+      <div class="skeleton h-16 w-full"></div>
+    ))}
+  </div>
+
+  <table class="w-full hidden" id="wo-table">
+    <thead>
+      <tr class="border-b border-white/5">
+        <th class="text-left text-xs font-mono text-white/30 uppercase tracking-wider pb-3 pr-4">WO Number</th>
+        <th class="text-left text-xs font-mono text-white/30 uppercase tracking-wider pb-3 pr-4">Equipment</th>
+        <th class="text-left text-xs font-mono text-white/30 uppercase tracking-wider pb-3 pr-4">Reporter</th>
+        <th class="text-left text-xs font-mono text-white/30 uppercase tracking-wider pb-3 pr-4">Type</th>
+        <th class="text-left text-xs font-mono text-white/30 uppercase tracking-wider pb-3 pr-4">Status</th>
+        <th class="text-left text-xs font-mono text-white/30 uppercase tracking-wider pb-3 pr-4">Reported At</th>
+        <th class="text-right text-xs font-mono text-white/30 uppercase tracking-wider pb-3">Actions</th>
+      </tr>
+    </thead>
+    <tbody id="wo-tbody"></tbody>
+  </table>
+
+  <p id="wo-empty" class="hidden text-center text-white/30 text-sm py-12">No work orders found.</p>
+  <p id="wo-error" class="hidden text-center text-danger text-sm py-12"></p>
+
+  <div id="wo-load-more" class="mt-6 flex justify-center" style="display:none">
+    <button class="btn-ghost text-sm" id="btn-load-more">Load more</button>
+  </div>
+</div>

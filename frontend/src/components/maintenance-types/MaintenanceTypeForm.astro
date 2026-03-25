@@ -1,0 +1,44 @@
+---
+---
+<div id="modal-maintenance" class="modal-backdrop hidden" role="dialog">
+  <div class="modal-box w-full max-w-lg">
+    <div class="flex items-center justify-between mb-6">
+      <h2 class="font-display font-700 text-lg text-white" id="modal-maintenance-title">Add Maintenance Type</h2>
+      <button
+        class="w-8 h-8 rounded-lg bg-white/5 border border-white/10 text-white/40 hover:text-white transition-all text-lg"
+        id="btn-close-maintenance-modal"
+      >&times;</button>
+    </div>
+
+    <form id="form-maintenance" class="space-y-5">
+      <input type="hidden" id="maintenance-id" />
+      <input type="hidden" id="maintenance-method" value="POST" />
+
+      <div>
+        <label class="input-label">Code <span class="text-accent">*</span></label>
+        <input type="text" id="input-maintenance-code" class="input-field font-mono uppercase" placeholder="e.g. PM" maxlength="10" />
+        <p class="input-error hidden" id="err-code"></p>
+      </div>
+
+      <div>
+        <label class="input-label">Name <span class="text-accent">*</span></label>
+        <input type="text" id="input-maintenance-name" class="input-field" placeholder="e.g. Preventive Maintenance" maxlength="100" />
+        <p class="input-error hidden" id="err-name"></p>
+      </div>
+
+      <div>
+        <label class="input-label">Description</label>
+        <textarea id="input-maintenance-desc" class="input-field min-h-24 resize-none" placeholder="Optional description..."></textarea>
+        <p class="input-error hidden" id="err-description"></p>
+      </div>
+
+      <div class="flex gap-3 pt-2">
+        <button type="submit" class="btn-primary flex-1" id="btn-submit-maintenance">
+          <span id="btn-submit-maintenance-text">Save Type</span>
+          <span id="btn-submit-maintenance-loader" class="hidden w-4 h-4 border-2 border-accent/30 border-t-accent rounded-full animate-spin"></span>
+        </button>
+        <button type="button" class="btn-ghost" id="btn-cancel-maintenance">Cancel</button>
+      </div>
+    </form>
+  </div>
+</div>

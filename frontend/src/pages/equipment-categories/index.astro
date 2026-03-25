@@ -1,0 +1,204 @@
+---
+import MainLayout from '../../layouts/MainLayout.astro'
+import EquipmentCategoryTable from '../../components/equipment-categories/EquipmentCategoryTable.astro'
+import EquipmentCategoryForm from '../../components/equipment-categories/EquipmentCategoryForm.astro'
+---
+
+<MainLayout title="Equipment Categories">
+  <EquipmentCategoryTable />
+  <EquipmentCategoryForm />
+</MainLayout>
+
+<script>
+  import api from '../../lib/axios'
+  import { setGlobalMessage } from '../../lib/store'
+  import type { ApiResponse, ApiErrorResponse, EquipmentCategory } from '../../types'
+
+  let editingId: number | null = null
+
+  const modal = document.getElementById('modal-category')!
+  const form = document.getElementById('form-category') as HTMLFormElement
+  const titleEl = document.getElementById('modal-category-title')!
+  const skeleton = document.getElementById('category-list-skeleton')!
+  const table = document.getElementById('category-table')!
+  const tbody = document.getElementById('category-tbody')!
+  const empty = document.getElementById('category-empty')!
+  const errorEl = document.getElementById('category-error')!
+
+  function openModal(title: string) {
+    titleEl.textContent = title
+    modal.classList.remove('hidden')
+  }
+
+  function closeModal() {
+    modal.classList.add('hidden')
+    form.reset()
+    editingId = null
+    clearErrors()
+    document.getElementById('file-preview')!.classList.add('hidden')
+  }
+
+  function clearErrors() {
+    ['category_name', 'is_active', 'manual_book'].forEach((f) => {
+      const el = document.getElementById(`err-${f}`)!
+      el.textContent = ''
+      el.classList.add('hidden')
+    })
+    form.querySelectorAll('.input-field').forEach((el) => el.classList.remove('error'))
+  }
+
+  function showErrors(errors: Record<string, string[]>) {
+    Object.entries(errors).forEach(([field, msgs]) => {
+      const el = document.getElementById(`err-${field}`)
+      if (el) {
+        el.textContent = msgs[0]
+        el.classList.remove('hidden')
+      }
+    })
+  }
+
+  function setLoading(loading: boolean) {
+    const text = document.getElementById('btn-submit-category-text')!
+    const loader = document.getElementById('btn-submit-category-loader')!
+    const btn = document.getElementById('btn-submit-category') as HTMLButtonElement
+    text.classList.toggle('hidden', loading)
+    loader.classList.toggle('hidden', !loading)
+    btn.disabled = loading
+  }
+
+  function renderRows(items: EquipmentCategory[]) {
+    tbody.innerHTML = items.map((item) => `
+      <tr class="table-row" data-id="${item.id}">
+        <td class="py-3 pr-4 text-sm text-white/80">${item.category_name}</td>
+        <td class="py-3 pr-4 text-sm">
+          ${item.manual_book_file_path
+            ? `<a href="${item.manual_book_file_path}" target="_blank" class="text-accent text-xs font-mono hover:underline">View PDF</a>`
+            : `<span class="text-white/20 text-xs">—</span>`}
+        </td>
+        <td class="py-3 pr-4">
+          <span class="badge ${item.is_active ? 'badge-completed' : 'badge-open'}">
+            ${item.is_active ? 'Active' : 'Inactive'}
+          </span>
+        </td>
+        <td class="py-3 text-right">
+          <button class="btn-ghost text-xs py-1.5 px-3 mr-2 btn-edit-category"
+            data-id="${item.id}"
+            data-name="${item.category_name}"
+            data-active="${item.is_active}"
+          >Edit</button>
+          <button class="btn-danger text-xs py-1.5 px-3 btn-delete-category" data-id="${item.id}">Delete</button>
+        </td>
+      </tr>
+    `).join('')
+
+    table.querySelectorAll('.btn-edit-category').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const el = btn as HTMLElement
+        editingId = Number(el.dataset.id)
+        ;(document.getElementById('input-category-name') as HTMLInputElement).value = el.dataset.name ?? ''
+        ;(document.getElementById('input-category-active') as HTMLSelectElement).value = el.dataset.active === 'true' ? '1' : '0'
+        ;(document.getElementById('category-method') as HTMLInputElement).value = 'PATCH'
+        openModal('Edit Category')
+      })
+    })
+
+    table.querySelectorAll('.btn-delete-category').forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        const id = (btn as HTMLElement).dataset.id
+        if (!confirm('Delete this category?')) return
+        try {
+          await api.delete(`/equipment-categories/${id}`)
+          setGlobalMessage('success', 'Category deleted.')
+          loadCategories()
+        } catch {
+          setGlobalMessage('error', 'Failed to delete category.')
+        }
+      })
+    })
+  }
+
+  async function loadCategories() {
+    skeleton.classList.remove('hidden')
+    table.classList.add('hidden')
+    empty.classList.add('hidden')
+    errorEl.classList.add('hidden')
+
+    try {
+      const res = await api.get<ApiResponse<EquipmentCategory[]>>('/equipment-categories')
+      const items = res.data.data
+
+      skeleton.classList.add('hidden')
+
+      if (!items.length) {
+        empty.classList.remove('hidden')
+        return
+      }
+
+      renderRows(items)
+      table.classList.remove('hidden')
+    } catch {
+      skeleton.classList.add('hidden')
+      errorEl.textContent = 'Failed to load categories.'
+      errorEl.classList.remove('hidden')
+    }
+  }
+
+  document.getElementById('btn-add-category')!.addEventListener('click', () => {
+    editingId = null
+    ;(document.getElementById('category-method') as HTMLInputElement).value = 'POST'
+    openModal('Add Category')
+  })
+
+  document.getElementById('btn-close-category-modal')!.addEventListener('click', closeModal)
+  document.getElementById('btn-cancel-category')!.addEventListener('click', closeModal)
+  modal.addEventListener('click', (e) => { if (e.target === modal) closeModal() })
+
+  const fileInput = document.getElementById('input-manual-book') as HTMLInputElement
+  const filePreview = document.getElementById('file-preview')!
+  const fileName = document.getElementById('file-name')!
+
+  fileInput.addEventListener('change', () => {
+    const file = fileInput.files?.[0]
+    if (file) {
+      fileName.textContent = file.name
+      filePreview.classList.remove('hidden')
+    }
+  })
+
+  document.getElementById('btn-clear-file')!.addEventListener('click', () => {
+    fileInput.value = ''
+    filePreview.classList.add('hidden')
+  })
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault()
+    clearErrors()
+    setLoading(true)
+
+    const formData = new FormData(form)
+
+    try {
+      if (editingId) {
+        await api.post(`/equipment-categories/${editingId}`, formData, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        })
+        setGlobalMessage('success', 'Category updated.')
+      } else {
+        await api.post('/equipment-categories', formData, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        })
+        setGlobalMessage('success', 'Category created.')
+      }
+      closeModal()
+      loadCategories()
+    } catch (err: any) {
+      const data: ApiErrorResponse = err.response?.data
+      if (data?.errors) showErrors(data.errors)
+      else setGlobalMessage('error', data?.message ?? 'Something went wrong.')
+    } finally {
+      setLoading(false)
+    }
+  })
+
+  loadCategories()
+</script>

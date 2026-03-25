@@ -1,0 +1,39 @@
+---
+interface Props {
+  label: string
+  name: string
+  type?: astroHTML.JSX.HTMLInputTypeAttribute
+  placeholder?: string
+  value?: string | number
+  required?: boolean
+  error?: string[]
+}
+
+const {
+  label,
+  name,
+  type = 'text',
+  placeholder = '',
+  value = '',
+  required = false,
+  error = [],
+} = Astro.props
+---
+
+<div class="flex flex-col gap-1">
+  <label for={name} class="input-label">
+    {label}
+    {required && <span class="text-accent ml-1">*</span>}
+  </label>
+  <input
+    id={name}
+    name={name}
+    type={type}
+    placeholder={placeholder}
+    value={value}
+    class={`input-field ${error.length > 0 ? 'error' : ''}`}
+  />
+  {error.map((msg: string) => (
+    <p class="input-error">{msg}</p>
+  ))}
+</div>

@@ -1,0 +1,18 @@
+---
+interface Props {
+  status: 'OPEN' | 'INSPECTED' | 'IN_PROGRESS' | 'COMPLETED'
+}
+
+const { status } = Astro.props as Props
+
+const map = {
+  OPEN: { class: 'badge-open', label: 'Open' },
+  INSPECTED: { class: 'badge-inspected', label: 'Inspected' },
+  IN_PROGRESS: { class: 'badge-in-progress', label: 'In Progress' },
+  COMPLETED: { class: 'badge-completed', label: 'Completed' },
+}
+
+const { class: cls, label } = map[status]
+---
+
+<span class={`badge ${cls}`}>{label}</span>

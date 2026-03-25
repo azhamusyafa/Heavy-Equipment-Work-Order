@@ -1,0 +1,172 @@
+---
+import MainLayout from '../../layouts/MainLayout.astro'
+import WorkshopLocationTable from '../../components/workshop-locations/WorkshopLocationTable.astro'
+import WorkshopLocationForm from '../../components/workshop-locations/WorkshopLocationForm.astro'
+---
+
+<MainLayout title="Workshop Locations">
+  <WorkshopLocationTable />
+  <WorkshopLocationForm />
+</MainLayout>
+
+<script>
+  import api from '../../lib/axios'
+  import { setGlobalMessage } from '../../lib/store'
+  import type { ApiResponse, ApiErrorResponse, WorkshopLocation } from '../../types'
+
+  let editingId: number | null = null
+
+  const modal = document.getElementById('modal-location')!
+  const titleEl = document.getElementById('modal-location-title')!
+  const skeleton = document.getElementById('location-list-skeleton')!
+  const table = document.getElementById('location-table')!
+  const tbody = document.getElementById('location-tbody')!
+  const empty = document.getElementById('location-empty')!
+  const errorEl = document.getElementById('location-error')!
+
+  const inputCode = document.getElementById('input-location-code') as HTMLInputElement
+  const inputName = document.getElementById('input-location-name') as HTMLInputElement
+  const inputAddress = document.getElementById('input-location-address') as HTMLTextAreaElement
+
+  function openModal(title: string) {
+    titleEl.textContent = title
+    modal.classList.remove('hidden')
+  }
+
+  function closeModal() {
+    modal.classList.add('hidden')
+    inputCode.value = ''
+    inputName.value = ''
+    inputAddress.value = ''
+    editingId = null
+    clearErrors()
+  }
+
+  function clearErrors() {
+    ['site_code', 'location_name', 'address'].forEach((f) => {
+      const el = document.getElementById(`err-${f}`)!
+      el.textContent = ''
+      el.classList.add('hidden')
+    })
+  }
+
+  function showErrors(errors: Record<string, string[]>) {
+    Object.entries(errors).forEach(([field, msgs]) => {
+      const el = document.getElementById(`err-${field}`)
+      if (el) { el.textContent = msgs[0]; el.classList.remove('hidden') }
+    })
+  }
+
+  function setLoading(loading: boolean) {
+    const text = document.getElementById('btn-submit-location-text')!
+    const loader = document.getElementById('btn-submit-location-loader')!
+    const btn = document.getElementById('btn-submit-location') as HTMLButtonElement
+    text.classList.toggle('hidden', loading)
+    loader.classList.toggle('hidden', !loading)
+    btn.disabled = loading
+  }
+
+  function renderRows(items: WorkshopLocation[]) {
+    tbody.innerHTML = items.map((item) => `
+      <tr class="table-row">
+        <td class="py-3 pr-4 font-mono text-sm text-accent">${item.site_code}</td>
+        <td class="py-3 pr-4 text-sm text-white/80">${item.location_name}</td>
+        <td class="py-3 pr-4 text-sm text-white/40">${item.address}</td>
+        <td class="py-3 text-right">
+          <button class="btn-ghost text-xs py-1.5 px-3 mr-2 btn-edit-loc"
+            data-id="${item.id}"
+            data-code="${item.site_code}"
+            data-name="${item.location_name}"
+            data-address="${item.address}"
+          >Edit</button>
+          <button class="btn-danger text-xs py-1.5 px-3 btn-delete-loc" data-id="${item.id}">Delete</button>
+        </td>
+      </tr>
+    `).join('')
+
+    tbody.querySelectorAll('.btn-edit-loc').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const el = btn as HTMLElement
+        editingId = Number(el.dataset.id)
+        inputCode.value = el.dataset.code ?? ''
+        inputName.value = el.dataset.name ?? ''
+        inputAddress.value = el.dataset.address ?? ''
+        openModal('Edit Location')
+      })
+    })
+
+    tbody.querySelectorAll('.btn-delete-loc').forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        if (!confirm('Delete this location?')) return
+        try {
+          await api.delete(`/workshop-locations/${(btn as HTMLElement).dataset.id}`)
+          setGlobalMessage('success', 'Location deleted.')
+          loadLocations()
+        } catch {
+          setGlobalMessage('error', 'Failed to delete.')
+        }
+      })
+    })
+  }
+
+  async function loadLocations() {
+    skeleton.classList.remove('hidden')
+    table.classList.add('hidden')
+    empty.classList.add('hidden')
+    errorEl.classList.add('hidden')
+
+    try {
+      const res = await api.get<ApiResponse<WorkshopLocation[]>>('/workshop-locations')
+      const items = res.data.data
+      skeleton.classList.add('hidden')
+      if (!items.length) { empty.classList.remove('hidden'); return }
+      renderRows(items)
+      table.classList.remove('hidden')
+    } catch {
+      skeleton.classList.add('hidden')
+      errorEl.textContent = 'Failed to load locations.'
+      errorEl.classList.remove('hidden')
+    }
+  }
+
+  document.getElementById('btn-add-location')!.addEventListener('click', () => {
+    editingId = null
+    openModal('Add Location')
+  })
+
+  document.getElementById('btn-close-location-modal')!.addEventListener('click', closeModal)
+  document.getElementById('btn-cancel-location')!.addEventListener('click', closeModal)
+  modal.addEventListener('click', (e) => { if (e.target === modal) closeModal() })
+
+  document.getElementById('form-location')!.addEventListener('submit', async (e) => {
+    e.preventDefault()
+    clearErrors()
+    setLoading(true)
+
+    const payload: Record<string, any> = {
+      site_code: inputCode.value,
+      location_name: inputName.value,
+      address: inputAddress.value,
+    }
+
+    try {
+      if (editingId) {
+        await api.patch(`/workshop-locations/${editingId}`, payload)
+        setGlobalMessage('success', 'Location updated.')
+      } else {
+        await api.post('/workshop-locations', payload)
+        setGlobalMessage('success', 'Location created.')
+      }
+      closeModal()
+      loadLocations()
+    } catch (err: any) {
+      const data: ApiErrorResponse = err.response?.data
+      if (data?.errors) showErrors(data.errors)
+      else setGlobalMessage('error', data?.message ?? 'Something went wrong.')
+    } finally {
+      setLoading(false)
+    }
+  })
+
+  loadLocations()
+</script>

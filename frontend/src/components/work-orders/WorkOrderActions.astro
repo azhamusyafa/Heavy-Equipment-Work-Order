@@ -1,0 +1,80 @@
+---
+---
+<div id="modal-inspect" class="modal-backdrop hidden" role="dialog">
+  <div class="modal-box w-full max-w-lg">
+    <div class="flex items-center justify-between mb-6">
+      <h2 class="font-display font-700 text-lg text-white">Inspect Work Order</h2>
+      <button class="w-8 h-8 rounded-lg bg-white/5 border border-white/10 text-white/40 hover:text-white transition-all text-lg" id="btn-close-inspect">&times;</button>
+    </div>
+    <form id="form-inspect" class="space-y-5">
+      <div>
+        <label class="input-label">Inspection Notes <span class="text-accent">*</span></label>
+        <textarea id="input-inspection-notes" class="input-field min-h-28 resize-none" placeholder="Describe findings..."></textarea>
+        <p class="input-error hidden" id="err-inspection_notes"></p>
+      </div>
+      <div>
+        <label class="input-label">Estimated Repair Cost <span class="text-accent">*</span></label>
+        <input type="number" id="input-estimated-cost" class="input-field" placeholder="0" min="0" />
+        <p class="input-error hidden" id="err-estimated_repair_cost"></p>
+      </div>
+      <div class="flex gap-3 pt-2">
+        <button type="submit" class="btn-primary flex-1" id="btn-submit-inspect">
+          <span id="btn-submit-inspect-text">Submit Inspection</span>
+          <span id="btn-submit-inspect-loader" class="hidden w-4 h-4 border-2 border-accent/30 border-t-accent rounded-full animate-spin"></span>
+        </button>
+        <button type="button" class="btn-ghost" id="btn-cancel-inspect">Cancel</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div id="modal-assign" class="modal-backdrop hidden" role="dialog">
+  <div class="modal-box w-full max-w-lg">
+    <div class="flex items-center justify-between mb-6">
+      <h2 class="font-display font-700 text-lg text-white">Assign Mechanic</h2>
+      <button class="w-8 h-8 rounded-lg bg-white/5 border border-white/10 text-white/40 hover:text-white transition-all text-lg" id="btn-close-assign">&times;</button>
+    </div>
+    <form id="form-assign" class="space-y-5">
+      <div>
+        <label class="input-label">Lead Mechanic Name <span class="text-accent">*</span></label>
+        <input type="text" id="input-mechanic-name" class="input-field" placeholder="e.g. Budi Santoso" maxlength="150" />
+        <p class="input-error hidden" id="err-lead_mechanic_name"></p>
+      </div>
+      <div class="flex gap-3 pt-2">
+        <button type="submit" class="btn-primary flex-1" id="btn-submit-assign">
+          <span id="btn-submit-assign-text">Assign Mechanic</span>
+          <span id="btn-submit-assign-loader" class="hidden w-4 h-4 border-2 border-accent/30 border-t-accent rounded-full animate-spin"></span>
+        </button>
+        <button type="button" class="btn-ghost" id="btn-cancel-assign">Cancel</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div id="modal-complete" class="modal-backdrop hidden" role="dialog">
+  <div class="modal-box w-full max-w-lg">
+    <div class="flex items-center justify-between mb-6">
+      <h2 class="font-display font-700 text-lg text-white">Complete Work Order</h2>
+      <button class="w-8 h-8 rounded-lg bg-white/5 border border-white/10 text-white/40 hover:text-white transition-all text-lg" id="btn-close-complete">&times;</button>
+    </div>
+    <form id="form-complete" class="space-y-5">
+      <div>
+        <label class="input-label">Actual Repair Cost <span class="text-accent">*</span></label>
+        <input type="number" id="input-actual-cost" class="input-field" placeholder="0" min="0" />
+        <p class="input-error hidden" id="err-actual_repair_cost"></p>
+      </div>
+      <div>
+        <label class="input-label">Replaced Parts Log <span class="text-accent">*</span></label>
+        <textarea id="input-parts-log" class="input-field min-h-28 resize-none" placeholder="List replaced parts..."></textarea>
+        <p class="input-error hidden" id="err-replaced_parts_log"></p>
+      </div>
+      <div class="flex gap-3 pt-2">
+        <button type="submit" class="btn-primary flex-1" id="btn-submit-complete">
+          <span id="btn-submit-complete-text">Complete WO</span>
+          <span id="btn-submit-complete-loader" class="hidden w-4 h-4 border-2 border-accent/30 border-t-accent rounded-full animate-spin"></span>
+        </button>
+        <button type="button" class="btn-ghost" id="btn-cancel-complete">Cancel</button>
+      </div>
+    </form>
+  </div>
+</div>

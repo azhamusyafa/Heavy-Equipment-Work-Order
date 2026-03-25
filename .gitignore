@@ -1,0 +1,42 @@
+# ==============================
+# Backend (Laravel)
+# ==============================
+backend/vendor/
+backend/.env
+backend/.env.backup
+backend/.env.production
+backend/storage/logs/*.log
+backend/storage/framework/cache/data/*
+backend/storage/framework/sessions/*
+backend/storage/framework/views/*
+backend/storage/app/public/*
+backend/storage/app/private/*
+backend/bootstrap/cache/*.php
+backend/public/hot
+backend/public/storage
+
+# ==============================
+# Frontend (Astro)
+# ==============================
+frontend/node_modules/
+frontend/dist/
+frontend/.env
+frontend/.env.*
+frontend/.astro/
+
+# ==============================
+# OS & Editor
+# ==============================
+.DS_Store
+Thumbs.db
+*.log
+
+.vscode/
+.idea/
+*.suo
+*.user
+
+# ==============================
+# Misc
+# ==============================
+backend-temp/

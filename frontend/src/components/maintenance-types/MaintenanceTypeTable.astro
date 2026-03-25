@@ -1,0 +1,32 @@
+---
+---
+<div class="card animate-fade-in-up">
+  <div class="flex items-center justify-between mb-6">
+    <div>
+      <h2 class="font-display font-700 text-lg text-white">Maintenance Types</h2>
+      <p class="text-white/30 text-xs mt-1">Kelola tipe perbaikan alat berat</p>
+    </div>
+    <button class="btn-primary" id="btn-add-maintenance">+ Add Type</button>
+  </div>
+
+  <div id="maintenance-list-skeleton" class="space-y-3">
+    {Array.from({length: 3}).map(() => (
+      <div class="skeleton h-14 w-full"></div>
+    ))}
+  </div>
+
+  <table class="w-full hidden" id="maintenance-table">
+    <thead>
+      <tr class="border-b border-white/5">
+        <th class="text-left text-xs font-mono text-white/30 uppercase tracking-wider pb-3 pr-4">Code</th>
+        <th class="text-left text-xs font-mono text-white/30 uppercase tracking-wider pb-3 pr-4">Name</th>
+        <th class="text-left text-xs font-mono text-white/30 uppercase tracking-wider pb-3 pr-4">Description</th>
+        <th class="text-right text-xs font-mono text-white/30 uppercase tracking-wider pb-3">Actions</th>
+      </tr>
+    </thead>
+    <tbody id="maintenance-tbody"></tbody>
+  </table>
+
+  <p id="maintenance-empty" class="hidden text-center text-white/30 text-sm py-12">No maintenance types found.</p>
+  <p id="maintenance-error" class="hidden text-center text-danger text-sm py-12"></p>
+</div>

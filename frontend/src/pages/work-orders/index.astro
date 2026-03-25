@@ -1,0 +1,237 @@
+---
+import MainLayout from '../../layouts/MainLayout.astro'
+import WorkOrderTable from '../../components/work-orders/WorkOrderTable.astro'
+import WorkOrderActions from '../../components/work-orders/WorkOrderActions.astro'
+---
+
+<MainLayout title="Work Orders">
+  <WorkOrderTable />
+  <WorkOrderActions />
+</MainLayout>
+
+<script>
+  import api from '../../lib/axios'
+  import { setGlobalMessage } from '../../lib/store'
+  import type { ApiResponse, ApiErrorResponse, WorkOrder, CursorPagination } from '../../types'
+
+  let cursor: string | null = null
+  let activeWoId: string | null = null
+
+  const skeleton = document.getElementById('wo-list-skeleton')!
+  const table = document.getElementById('wo-table')!
+  const tbody = document.getElementById('wo-tbody')!
+  const empty = document.getElementById('wo-empty')!
+  const errorEl = document.getElementById('wo-error')!
+  const loadMoreWrap = document.getElementById('wo-load-more')!
+  const btnLoadMore = document.getElementById('btn-load-more')!
+
+  const statusBadge = (status: WorkOrder['status']) => {
+    const map: Record<string, string> = {
+      OPEN: 'badge-open',
+      INSPECTED: 'badge-inspected',
+      IN_PROGRESS: 'badge-in-progress',
+      COMPLETED: 'badge-completed',
+    }
+    const label: Record<string, string> = {
+      OPEN: 'Open',
+      INSPECTED: 'Inspected',
+      IN_PROGRESS: 'In Progress',
+      COMPLETED: 'Completed',
+    }
+    return `<span class="badge ${map[status]}">${label[status]}</span>`
+  }
+
+  function actionButton(wo: WorkOrder): string {
+    if (wo.status === 'OPEN') return `<button class="btn-primary text-xs py-1.5 px-3 btn-action" data-id="${wo.id}" data-action="inspect">Inspect</button>`
+    if (wo.status === 'INSPECTED') return `<button class="btn-primary text-xs py-1.5 px-3 btn-action" data-id="${wo.id}" data-action="assign">Assign</button>`
+    if (wo.status === 'IN_PROGRESS') return `<button class="btn-primary text-xs py-1.5 px-3 btn-action" data-id="${wo.id}" data-action="complete">Complete</button>`
+    return `<span class="text-white/20 text-xs font-mono">Done</span>`
+  }
+
+  function appendRows(items: WorkOrder[]) {
+    const rows = items.map((wo) => `
+      <tr class="table-row">
+        <td class="py-3 pr-4">
+          <a href="/work-orders/${wo.id}" class="font-mono text-sm text-accent hover:underline">${wo.wo_number}</a>
+        </td>
+        <td class="py-3 pr-4 text-sm text-white/70">${wo.equipment_category?.category_name ?? '-'}</td>
+        <td class="py-3 pr-4 text-sm text-white/70">${wo.reporter_name}</td>
+        <td class="py-3 pr-4">
+          <span class="text-xs font-mono text-white/40">${wo.maintenance_type?.code ?? '-'}</span>
+        </td>
+        <td class="py-3 pr-4">${statusBadge(wo.status)}</td>
+        <td class="py-3 pr-4 text-sm text-white/40">${new Date(wo.reported_at).toLocaleDateString('id-ID')}</td>
+        <td class="py-3 text-right">${actionButton(wo)}</td>
+      </tr>
+    `).join('')
+
+    tbody.insertAdjacentHTML('beforeend', rows)
+    bindActionButtons()
+  }
+
+  function bindActionButtons() {
+    document.querySelectorAll('.btn-action').forEach((btn) => {
+      btn.replaceWith(btn.cloneNode(true))
+    })
+
+    document.querySelectorAll('.btn-action').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const el = btn as HTMLElement
+        activeWoId = el.dataset.id ?? null
+        const action = el.dataset.action
+
+        if (action === 'inspect') openModal('modal-inspect')
+        if (action === 'assign') openModal('modal-assign')
+        if (action === 'complete') openModal('modal-complete')
+      })
+    })
+  }
+
+  function openModal(id: string) {
+    document.getElementById(id)!.classList.remove('hidden')
+  }
+
+  function closeModal(id: string) {
+    document.getElementById(id)!.classList.add('hidden')
+    activeWoId = null
+  }
+
+  async function loadWorkOrders(append = false) {
+    if (!append) {
+      skeleton.classList.remove('hidden')
+      table.classList.add('hidden')
+      empty.classList.add('hidden')
+      errorEl.classList.add('hidden')
+      tbody.innerHTML = ''
+    }
+
+    try {
+      const params = cursor ? { cursor } : {}
+      const res = await api.get<ApiResponse<CursorPagination<WorkOrder>>>('/work-orders', { params })
+      const { data: items, next_cursor } = res.data.data
+
+      skeleton.classList.add('hidden')
+
+      if (!items.length && !append) {
+        empty.classList.remove('hidden')
+        return
+      }
+
+      appendRows(items)
+      table.classList.remove('hidden')
+
+      cursor = next_cursor
+      loadMoreWrap.classList.toggle('hidden', !next_cursor)
+    } catch {
+      skeleton.classList.add('hidden')
+      errorEl.textContent = 'Failed to load work orders.'
+      errorEl.classList.remove('hidden')
+    }
+  }
+
+  btnLoadMore.addEventListener('click', () => {
+    loadMoreWrap.classList.add('hidden')
+    loadWorkOrders(true)
+  })
+
+  function setupModalClose(modalId: string, btnId: string, cancelId: string) {
+    const modal = document.getElementById(modalId)!
+    document.getElementById(btnId)!.addEventListener('click', () => closeModal(modalId))
+    document.getElementById(cancelId)!.addEventListener('click', () => closeModal(modalId))
+    modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(modalId) })
+  }
+
+  setupModalClose('modal-inspect', 'btn-close-inspect', 'btn-cancel-inspect')
+  setupModalClose('modal-assign', 'btn-close-assign', 'btn-cancel-assign')
+  setupModalClose('modal-complete', 'btn-close-complete', 'btn-cancel-complete')
+
+  function setLoading(btnTextId: string, btnLoaderId: string, btnId: string, loading: boolean) {
+    document.getElementById(btnTextId)!.classList.toggle('hidden', loading)
+    document.getElementById(btnLoaderId)!.classList.toggle('hidden', !loading)
+    ;(document.getElementById(btnId) as HTMLButtonElement).disabled = loading
+  }
+
+  function clearErrors(fields: string[]) {
+    fields.forEach((f) => {
+      const el = document.getElementById(`err-${f}`)
+      if (el) { el.textContent = ''; el.classList.add('hidden') }
+    })
+  }
+
+  function showErrors(errors: Record<string, string[]>) {
+    Object.entries(errors).forEach(([field, msgs]) => {
+      const el = document.getElementById(`err-${field}`)
+      if (el) { el.textContent = msgs[0]; el.classList.remove('hidden') }
+    })
+  }
+
+  document.getElementById('form-inspect')!.addEventListener('submit', async (e) => {
+    e.preventDefault()
+    clearErrors(['inspection_notes', 'estimated_repair_cost'])
+    setLoading('btn-submit-inspect-text', 'btn-submit-inspect-loader', 'btn-submit-inspect', true)
+
+    try {
+      await api.patch(`/work-orders/${activeWoId}/inspect`, {
+        inspection_notes: (document.getElementById('input-inspection-notes') as HTMLTextAreaElement).value,
+        estimated_repair_cost: Number((document.getElementById('input-estimated-cost') as HTMLInputElement).value),
+      })
+      setGlobalMessage('success', 'Inspection recorded.')
+      closeModal('modal-inspect')
+      cursor = null
+      loadWorkOrders()
+    } catch (err: any) {
+      const data: ApiErrorResponse = err.response?.data
+      if (data?.errors) showErrors(data.errors)
+      else setGlobalMessage('error', data?.message ?? 'Failed to inspect.')
+    } finally {
+      setLoading('btn-submit-inspect-text', 'btn-submit-inspect-loader', 'btn-submit-inspect', false)
+    }
+  })
+
+  document.getElementById('form-assign')!.addEventListener('submit', async (e) => {
+    e.preventDefault()
+    clearErrors(['lead_mechanic_name'])
+    setLoading('btn-submit-assign-text', 'btn-submit-assign-loader', 'btn-submit-assign', true)
+
+    try {
+      await api.patch(`/work-orders/${activeWoId}/assign-mechanic`, {
+        lead_mechanic_name: (document.getElementById('input-mechanic-name') as HTMLInputElement).value,
+      })
+      setGlobalMessage('success', 'Mechanic assigned.')
+      closeModal('modal-assign')
+      cursor = null
+      loadWorkOrders()
+    } catch (err: any) {
+      const data: ApiErrorResponse = err.response?.data
+      if (data?.errors) showErrors(data.errors)
+      else setGlobalMessage('error', data?.message ?? 'Failed to assign.')
+    } finally {
+      setLoading('btn-submit-assign-text', 'btn-submit-assign-loader', 'btn-submit-assign', false)
+    }
+  })
+
+  document.getElementById('form-complete')!.addEventListener('submit', async (e) => {
+    e.preventDefault()
+    clearErrors(['actual_repair_cost', 'replaced_parts_log'])
+    setLoading('btn-submit-complete-text', 'btn-submit-complete-loader', 'btn-submit-complete', true)
+
+    try {
+      await api.patch(`/work-orders/${activeWoId}/complete`, {
+        actual_repair_cost: Number((document.getElementById('input-actual-cost') as HTMLInputElement).value),
+        replaced_parts_log: (document.getElementById('input-parts-log') as HTMLTextAreaElement).value,
+      })
+      setGlobalMessage('success', 'Work order completed.')
+      closeModal('modal-complete')
+      cursor = null
+      loadWorkOrders()
+    } catch (err: any) {
+      const data: ApiErrorResponse = err.response?.data
+      if (data?.errors) showErrors(data.errors)
+      else setGlobalMessage('error', data?.message ?? 'Failed to complete.')
+    } finally {
+      setLoading('btn-submit-complete-text', 'btn-submit-complete-loader', 'btn-submit-complete', false)
+    }
+  })
+
+  loadWorkOrders()
+</script>

@@ -1,0 +1,102 @@
+---
+import MainLayout from '../layouts/MainLayout.astro'
+---
+
+<MainLayout title="Dashboard">
+  <div class="grid grid-cols-4 gap-4 mb-8">
+    {[
+      { label: 'Total Work Orders', id: 'stat-total', color: 'accent' },
+      { label: 'Open', id: 'stat-open', color: 'info' },
+      { label: 'In Progress', id: 'stat-progress', color: 'warning' },
+      { label: 'Completed', id: 'stat-completed', color: 'accent' },
+    ].map((stat) => (
+      <div class="card">
+        <p class="text-white/30 text-xs font-mono uppercase tracking-wider mb-3">{stat.label}</p>
+        <p class={`font-display font-700 text-3xl text-${stat.color}`} id={stat.id}>
+          <span class="skeleton inline-block w-12 h-8"></span>
+        </p>
+      </div>
+    ))}
+  </div>
+
+  <div class="card">
+    <div class="flex items-center justify-between mb-6">
+      <h2 class="font-display font-700 text-lg">Recent Work Orders</h2>
+      <a href="/work-orders" class="text-accent text-sm hover:underline">View all</a>
+    </div>
+    <div id="recent-wo-skeleton" class="space-y-3">
+      {Array.from({length: 5}).map(() => (
+        <div class="skeleton h-14 w-full"></div>
+      ))}
+    </div>
+    <table class="w-full hidden" id="recent-wo-table">
+      <thead>
+        <tr class="border-b border-white/5">
+          <th class="text-left text-xs font-mono text-white/30 uppercase tracking-wider pb-3 pr-4">WO Number</th>
+          <th class="text-left text-xs font-mono text-white/30 uppercase tracking-wider pb-3 pr-4">Equipment</th>
+          <th class="text-left text-xs font-mono text-white/30 uppercase tracking-wider pb-3 pr-4">Status</th>
+          <th class="text-left text-xs font-mono text-white/30 uppercase tracking-wider pb-3">Reported At</th>
+        </tr>
+      </thead>
+      <tbody id="recent-wo-tbody"></tbody>
+    </table>
+  </div>
+</MainLayout>
+
+<script>
+  import api from '../lib/axios'
+  import type { WorkOrder, ApiResponse, CursorPagination } from '../types'
+
+  const statusBadge = (status: WorkOrder['status']) => {
+    const map: Record<string, string> = {
+      OPEN: 'badge-open',
+      INSPECTED: 'badge-inspected',
+      IN_PROGRESS: 'badge-in-progress',
+      COMPLETED: 'badge-completed',
+    }
+    const label: Record<string, string> = {
+      OPEN: 'Open',
+      INSPECTED: 'Inspected',
+      IN_PROGRESS: 'In Progress',
+      COMPLETED: 'Completed',
+    }
+    return `<span class="badge ${map[status]}">${label[status]}</span>`
+  }
+
+  async function load() {
+    try {
+      const res = await api.get<ApiResponse<CursorPagination<WorkOrder>>>('/work-orders')
+      const items = res.data.data.data ?? []
+
+      const counts = { total: items.length, open: 0, progress: 0, completed: 0 }
+      items.forEach((wo) => {
+        if (wo.status === 'OPEN') counts.open++
+        if (wo.status === 'IN_PROGRESS') counts.progress++
+        if (wo.status === 'COMPLETED') counts.completed++
+      })
+
+      document.getElementById('stat-total')!.textContent = String(counts.total)
+      document.getElementById('stat-open')!.textContent = String(counts.open)
+      document.getElementById('stat-progress')!.textContent = String(counts.progress)
+      document.getElementById('stat-completed')!.textContent = String(counts.completed)
+
+      const tbody = document.getElementById('recent-wo-tbody')!
+      tbody.innerHTML = items.slice(0, 5).map((wo) => `
+        <tr class="table-row">
+          <td class="py-3 pr-4 font-mono text-sm text-accent">${wo.wo_number}</td>
+          <td class="py-3 pr-4 text-sm text-white/70">${wo.equipment_category?.category_name ?? '-'}</td>
+          <td class="py-3 pr-4">${statusBadge(wo.status)}</td>
+          <td class="py-3 text-sm text-white/40">${new Date(wo.reported_at).toLocaleDateString('id-ID')}</td>
+        </tr>
+      `).join('')
+
+      document.getElementById('recent-wo-skeleton')!.classList.add('hidden')
+      document.getElementById('recent-wo-table')!.classList.remove('hidden')
+    } catch {
+      document.getElementById('recent-wo-skeleton')!.innerHTML =
+        '<p class="text-danger text-sm text-center py-8">Failed to load data.</p>'
+    }
+  }
+
+  load()
+</script>

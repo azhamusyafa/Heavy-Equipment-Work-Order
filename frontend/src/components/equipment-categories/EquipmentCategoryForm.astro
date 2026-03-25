@@ -1,0 +1,60 @@
+---
+---
+<div id="modal-category" class="modal-backdrop hidden" role="dialog">
+  <div class="modal-box w-full max-w-lg">
+    <div class="flex items-center justify-between mb-6">
+      <h2 class="font-display font-700 text-lg text-white" id="modal-category-title">Add Category</h2>
+      <button
+        class="w-8 h-8 rounded-lg bg-white/5 border border-white/10 text-white/40 hover:text-white transition-all text-lg"
+        id="btn-close-category-modal"
+      >&times;</button>
+    </div>
+
+    <form id="form-category" class="space-y-5" enctype="multipart/form-data">
+      <input type="hidden" id="category-id" name="category_id" />
+      <input type="hidden" id="category-method" name="_method" value="POST" />
+
+      <div>
+        <label class="input-label">Category Name <span class="text-accent">*</span></label>
+        <input type="text" name="category_name" id="input-category-name" class="input-field" placeholder="e.g. Excavator 20-Ton" />
+        <p class="input-error hidden" id="err-category_name"></p>
+      </div>
+
+      <div>
+        <label class="input-label">Status <span class="text-accent">*</span></label>
+        <select name="is_active" id="input-category-active" class="input-field">
+          <option value="1">Active</option>
+          <option value="0">Inactive</option>
+        </select>
+        <p class="input-error hidden" id="err-is_active"></p>
+      </div>
+
+      <div>
+        <label class="input-label">Manual Book (PDF, max 5MB)</label>
+        <div class="relative">
+          <input
+            type="file"
+            name="manual_book"
+            id="input-manual-book"
+            accept=".pdf"
+            class="input-field file:hidden cursor-pointer text-white/30"
+          />
+          <div id="file-preview" class="mt-2 flex items-center gap-2 px-3 py-2 bg-surface-700 rounded-lg border border-white/5" style="display:none">
+            <div class="w-2 h-2 rounded-full bg-accent"></div>
+            <span class="text-xs text-white/50 font-mono" id="file-name"></span>
+            <button type="button" id="btn-clear-file" class="ml-auto text-white/30 hover:text-danger text-xs">remove</button>
+          </div>
+        </div>
+        <p class="input-error hidden" id="err-manual_book"></p>
+      </div>
+
+      <div class="flex gap-3 pt-2">
+        <button type="submit" class="btn-primary flex-1" id="btn-submit-category">
+          <span id="btn-submit-category-text">Save Category</span>
+          <span id="btn-submit-category-loader" class="hidden w-4 h-4 border-2 border-accent/30 border-t-accent rounded-full animate-spin"></span>
+        </button>
+        <button type="button" class="btn-ghost" id="btn-cancel-category">Cancel</button>
+      </div>
+    </form>
+  </div>
+</div>
