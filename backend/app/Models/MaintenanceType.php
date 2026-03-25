@@ -1,0 +1,25 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+
+class MaintenanceType extends Model
+{
+    use SoftDeletes;
+
+    protected $table = 'master_maintenance_types';
+
+    protected $fillable = [
+        'code',
+        'name',
+        'description',
+    ];
+
+    public function workOrders(): HasMany
+    {
+        return $this->hasMany(WorkOrder::class, 'maintenance_type_id');
+    }
+}
